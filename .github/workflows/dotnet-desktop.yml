@@ -1,0 +1,45 @@
+name: Build and Deploy Blazor WebAssembly App
+
+on:
+  push:
+    branches:
+      - main # или любая другая ветка, которую вы используете
+  workflow_dispatch: # чтобы можно было запускать вручную
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ./FindFriends.sln
+
+    - name: Build project
+      run: dotnet build ./FindFriends.sln --configuration Release
+
+    - name: Publish WebAssembly app
+      run: dotnet publish ./WebAssembly/WebAssembly.csproj -c Release -o ./publish
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: blazor-app
+        path: ./publish
+
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
+      with:
+        package: ./publish
